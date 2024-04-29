@@ -4,36 +4,35 @@ networks:
     driver: bridge
 
 services:
+  mysql_db:
+    image: mysql:5.7
+    ports:
+      - "3306:3306"
+    env_file:
+      - .env
+    networks:
+      - my-app-network
+
   fastapi_app:
     container_name: fastapi_app
     restart: always
-    image: capstone_design-fastapi${BRANCH_NAME}
+    build: ./capstone_design/fastapi_app/Dockerfile
     ports:
       - "5000:5000"
     env_file:
       - .env
     networks:
       - my-app-network
+    depends_on:
+      - mysql_db
 
   react_app:
     container_name: react_app
     restart: always
-    image: capstone_design-react${BRANCH_NAME}
+    build: ./capstone_design/react_app/Dockerfile
     ports:
       - "3000:3000"
-    environment:
-      - REACT_APP_API_URL=http://fastapi_app:5000
     networks:
       - my-app-network
     depends_on:
-      - fastapi_app
-
-  nginx:
-    container_name: proxy_nginx
-    restart: always
-    image: capstone_design-nginx${BRANCH_NAME}
-    ports:
-      - "8080:8080"
-    depends_on:
-      - react_app
       - fastapi_app
