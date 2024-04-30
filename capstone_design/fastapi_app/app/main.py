@@ -11,6 +11,7 @@ app = FastAPI()
 
 origins = [
     "http://react_app:3000",  # React 앱의 도메인
+    "http://fastapi_app:5000",
     # 추가적인 도메인들...
 ]
 
@@ -26,19 +27,24 @@ DATABASE_URL = "mysql+pymysql://root:root@mysql_db/consult_data"
 engine = create_engine(DATABASE_URL)
 SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
 
-class ChatRequest(BaseModel):
-    messages: list
+class Message(BaseModel):
+    messages: Dict[str, Union[str, str]]
 
 @app.get("/")
 def read_root():
     return {"Hello": "World"}
 
 @app.post("/api/chat")
-async def chat():
-    messages = chat_request.messages
-    messages = "나는 축구와 농구를 좋아해"
-    response = get_chat_response(messages)
-    return {"response": response}
+async def chat(message: Message):
+    print(message)
+    role = message.messages['role']
+    msg = message.messages['content']
+    return_mes = get_chat_response(msg)
+    return {"response": return_mes}
+
+@app.get("/items/{item_id}")
+def read_item(item_id: int, q: str | None = None):
+    return {"item_id": item_id, "q": q}
 
 @app.get("/employees/")
 def read_employees():
@@ -48,14 +54,8 @@ def read_employees():
         employees = Table('employees', metadata, autoload_with=engine)
         query = select(employees)
         result = session.execute(query)
-        print(result)
-        return result.fetchall()
+        # Convert ResultProxy to a list of dictionaries
+        result_as_dict = [dict(row) for row in result]
+        return result_as_dict
     finally:
         session.close()
-
-
-@app.get("/items/{item_id}")
-def read_item(item_id: int, q: str | None = None):
-    return {"item_id": item_id, "q": q}
-
-    app.include_router(router)
