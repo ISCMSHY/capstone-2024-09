@@ -5,11 +5,14 @@ networks:
 
 services:
   mysql_db:
+    container_name: mysql_db
     image: mysql:5.7
     ports:
       - "3306:3306"
     env_file:
       - .env
+    volumes:
+      - ./capstone_design/mysql_db/initdb:/docker-entrypoint-initdb.d
     networks:
       - my-app-network
 
