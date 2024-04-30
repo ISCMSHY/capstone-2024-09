@@ -3,15 +3,14 @@ from fastapi.middleware.cors import CORSMiddleware
 from fastapi import APIRouter, Request
 from pydantic import BaseModel
 from .open_ai import get_chat_response
-from sqlalchemy import create_engine, MetaData, Table, select
-from sqlalchemy.orm import sessionmaker
+from .db_query import save_chats, get_job_categories
 from typing import List, Dict, Union
 
 router = APIRouter()
 app = FastAPI()
 
 origins = [
-    "http://react_app:3000",  # React 앱의 도메인
+    "http://localhost:3000",  # React 앱의 도메인
     "http://fastapi_app:5000",
     # 추가적인 도메인들...
 ]
@@ -23,10 +22,6 @@ app.add_middleware(
     allow_methods=["*"],
     allow_headers=["*"],
 )
-
-DATABASE_URL = "mysql+pymysql://root:root@mysql_db/consult_data"
-engine = create_engine(DATABASE_URL)
-SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
 
 class Message(BaseModel):
     messages: Dict[str, Union[str, str]]
@@ -43,17 +38,7 @@ async def chat(message: Message):
     role = message.messages['role']
     msg = message.messages['content']
     return_mes = get_chat_response(msg)
-
-    session = SessionLocal()
-    try:
-        metadata = MetaData()
-        chats = Table('chats', metadata, autoload_with=engine)
-        query = chats.insert().values(role=role, content=msg)
-        session.execute(query)
-        session.commit()
-    finally:
-        session.close()
-
+    await save_chats(role, msg) # save content to database
     return {"response": return_mes}
 
 @app.post("/api/get_result")
@@ -61,17 +46,8 @@ async def get_result(messages: Messages):
     print(messages)
     return {"response": "success"}
 
-@app.get("/employees/")
-def read_employees():
-    session = SessionLocal()
-    try:
-        metadata = MetaData()
-        employees = Table('employees', metadata, autoload_with=engine)
-        query = select(employees)
-        result = session.execute(query)
-        print(result)
-        # Convert ResultProxy to a list of dictionaries
-        result_as_dict = [row._asdict() for row in result]
-        return result_as_dict
-    finally:
-        session.close()
+@app.post("/get_job/")
+async def get_job(id: int):
+    job = await get_job_categories(id)
+    print(job)
+    return {"response": job}

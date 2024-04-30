@@ -1,21 +1,37 @@
-import React, { useState } from 'react';
-import axios from 'axios';
+import React, {useState} from "react";
 
-function ChatBot() {
+export function ChatComponent() {
     const [messages, setMessages] = useState([]);
     const [inputMessage, setInputMessage] = useState('');
 
     const handleSubmit = async (e) => {
         e.preventDefault();
-        setMessages([...messages, { role: 'user', content: inputMessage }]);
-        setInputMessage('');
+        const newMessage = { role: 'user', content: inputMessage };
+        const updatedMessages = [...messages, newMessage];
+        // 이거는 추 후에 분류형 AI에게 넘겨줄 데이터로 사용하며 될 듯 하다.
 
         try {
-            const response = await axios.post('/api/chat', { messages: [...messages, { role: 'user', content: inputMessage }] });
-            setMessages([...messages, { role: 'user', content: inputMessage }, { role: 'assistant', content: response.data.result }]);
+            const response = await fetch('http://localhost:5000/api/chat', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                credentials: 'include',
+                body: JSON.stringify({ messages: newMessage }),
+            });
+
+            if (!response.ok) {
+                throw new Error('Network response was not ok');
+            }
+
+            const data = await response.json();
+            console.log(data);
         } catch (error) {
             console.error('Error:', error);
         }
+
+        setMessages([...messages, newMessage]);
+        setInputMessage('');
     };
 
     return (
@@ -41,5 +57,3 @@ function ChatBot() {
         </div>
     );
 }
-
-export default ChatBot;
