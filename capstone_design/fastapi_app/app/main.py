@@ -5,6 +5,7 @@ from pydantic import BaseModel
 from .open_ai import get_chat_response
 from sqlalchemy import create_engine, MetaData, Table, select
 from sqlalchemy.orm import sessionmaker
+from typing import List, Dict, Union
 
 router = APIRouter()
 app = FastAPI()
@@ -29,6 +30,8 @@ SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
 
 class Message(BaseModel):
     messages: Dict[str, Union[str, str]]
+class Messages(BaseModel):
+    messages: List[Message]
 
 @app.get("/")
 def read_root():
@@ -40,11 +43,23 @@ async def chat(message: Message):
     role = message.messages['role']
     msg = message.messages['content']
     return_mes = get_chat_response(msg)
+
+    session = SessionLocal()
+    try:
+        metadata = MetaData()
+        chats = Table('chats', metadata, autoload_with=engine)
+        query = chats.insert().values(role=role, content=msg)
+        session.execute(query)
+        session.commit()
+    finally:
+        session.close()
+
     return {"response": return_mes}
 
-@app.get("/items/{item_id}")
-def read_item(item_id: int, q: str | None = None):
-    return {"item_id": item_id, "q": q}
+@app.post("/api/get_result")
+async def get_result(messages: Messages):
+    print(messages)
+    return {"response": "success"}
 
 @app.get("/employees/")
 def read_employees():
@@ -54,8 +69,9 @@ def read_employees():
         employees = Table('employees', metadata, autoload_with=engine)
         query = select(employees)
         result = session.execute(query)
+        print(result)
         # Convert ResultProxy to a list of dictionaries
-        result_as_dict = [dict(row) for row in result]
+        result_as_dict = [row._asdict() for row in result]
         return result_as_dict
     finally:
         session.close()
