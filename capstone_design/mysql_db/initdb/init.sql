@@ -14,10 +14,10 @@ CREATE TABLE IF NOT EXISTS chats (
 
 CREATE TABLE IF NOT EXISTS jobs (
     id INT AUTO_INCREMENT,
-    job_name VARCHAR(50) CHARACTER SET utf8mb4,
-    category VARCHAR(50) CHARACTER SET utf8mb4,
+    job_name TEXT CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NOT NULL,
+    category TEXT CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NOT NULL,
     PRIMARY KEY(id)
-) DEFAULT CHARSET=utf8mb4;
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 INSERT INTO jobs (job_name, category)
 VALUES ('운동 관련직', '서비스계열'),

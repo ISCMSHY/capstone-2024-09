@@ -1,3 +1,4 @@
+# -*- coding: utf-8 -*-
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi import APIRouter, Request
@@ -5,9 +6,10 @@ from pydantic import BaseModel
 from .open_ai import get_chat_response
 from .db_query import save_chats, get_job_categories
 from typing import List, Dict, Union
+from fastapi.responses import UJSONResponse
 
 router = APIRouter()
-app = FastAPI()
+app = FastAPI(default_response_class=UJSONResponse)
 
 origins = [
     "http://localhost:3000",  # React 앱의 도메인

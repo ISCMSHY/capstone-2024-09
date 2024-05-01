@@ -4,3 +4,4 @@ openai==1.21.2
 python-dotenv==1.0.1
 sqlalchemy==2.0.29
 pymysql==1.1.0
+ujson==5.9.0

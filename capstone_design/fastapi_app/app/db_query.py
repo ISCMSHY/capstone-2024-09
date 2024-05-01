@@ -1,8 +1,10 @@
+# -*- coding: utf-8 -*-
 from sqlalchemy import create_engine, MetaData, Table, select
 from sqlalchemy.orm import sessionmaker
+from sqlalchemy.pool import NullPool
 
-DATABASE_URL = "mysql+pymysql://root:root@mysql_db/consult_data"
-engine = create_engine(DATABASE_URL, connect_args={'charset': 'utf8mb4'})
+DATABASE_URL = "mysql+pymysql://root:root@mysql_db/consult_data?charset=utf8mb4"
+engine = create_engine(DATABASE_URL, poolclass=NullPool)
 SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
 
 
@@ -25,11 +27,10 @@ async def get_job_categories(id):
         query = select(jobs).where(jobs.c.id == id)
         result = session.execute(query)
         row = result.fetchone()
-        print(row)
-        job = row[1]
-        job_category = row[2]
         if row is None:
             return {"error": "No chat with id 1 found"}
-        return {"job": row[2], "category": row[1]}
+        job = row[1].encode('utf-8').decode('utf-8')
+        job_category = row[2].encode('utf-8').decode('utf-8')
+        return {"job": job, "category": job_category}
     finally:
         session.close()
